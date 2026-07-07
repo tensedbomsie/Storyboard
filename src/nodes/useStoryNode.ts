@@ -1,12 +1,12 @@
-import { useReactFlow } from '@xyflow/react'
-import type { StoryNode } from '../types'
+import type { StoryNodeData } from '../types'
 import { useBoardActions } from '../BoardActionsContext'
+import { useNodesContext } from '../NodesContext'
 
 export function useStoryNode(id: string) {
-  const { setNodes, getNode } = useReactFlow<StoryNode>()
+  const { setNodes } = useNodesContext()
   const { openSendNode } = useBoardActions()
 
-  const update = (patch: Partial<StoryNode['data']>) => {
+  const update = (patch: Partial<StoryNodeData>) => {
     setNodes((nodes) =>
       nodes.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...patch } } : n)),
     )
@@ -23,8 +23,11 @@ export function useStoryNode(id: string) {
   }
 
   const sendToAnotherBoard = () => {
-    const node = getNode(id)
-    if (node) openSendNode(node)
+    setNodes((nodes) => {
+      const node = nodes.find((n) => n.id === id)
+      if (node) openSendNode(node)
+      return nodes
+    })
   }
 
   return { update, togglePin, sendToAnotherBoard }

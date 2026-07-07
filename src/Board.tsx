@@ -19,6 +19,7 @@ import ImageNode from './nodes/ImageNode'
 import TimelineNode from './nodes/TimelineNode'
 import { SessionContext } from './SessionContext'
 import { BoardActionsContext } from './BoardActionsContext'
+import { NodesContext } from './NodesContext'
 import { buildExportText } from './export'
 
 const nodeTypes = { text: TextNode, image: ImageNode, timeline: TimelineNode }
@@ -164,6 +165,7 @@ export default function Board({
 
   return (
     <SessionContext.Provider value={{ userId: session.user.id }}>
+      <NodesContext.Provider value={{ setNodes }}>
       <BoardActionsContext.Provider value={{ openSendNode }}>
         <div className="board-page">
           <div className="toolbar">
@@ -230,6 +232,7 @@ export default function Board({
           )}
         </div>
       </BoardActionsContext.Provider>
+      </NodesContext.Provider>
     </SessionContext.Provider>
   )
 }
