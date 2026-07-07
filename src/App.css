@@ -159,3 +159,94 @@ body {
   border-radius: 4px;
   padding: 0.35rem;
 }
+
+.story-node-upload-btn {
+  display: block;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  background: #26262f;
+  color: #eee;
+  border: 1px solid #2a2a33;
+  border-radius: 4px;
+  padding: 0.35rem;
+  cursor: pointer;
+}
+
+.story-node-timeline {
+  padding: 0.5rem;
+}
+
+.story-node-date {
+  width: 100%;
+  box-sizing: border-box;
+  background: #14141a;
+  color: #fbbf24;
+  border: 1px solid #2a2a33;
+  border-radius: 4px;
+  padding: 0.35rem;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+}
+
+.board-list-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.board-list-page .toolbar h1 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.board-list {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+  align-content: start;
+}
+
+.board-card {
+  background: #1a1a20;
+  border: 1px solid #2a2a33;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.board-card.new {
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  cursor: pointer;
+  background: transparent;
+  border-style: dashed;
+  font-size: 1rem;
+}
+
+.board-card-name {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.board-card-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.board-card-actions button {
+  flex: 1;
+  padding: 0.3rem;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #26262f;
+  color: #eee;
+  cursor: pointer;
+  font-size: 0.8rem;
+}

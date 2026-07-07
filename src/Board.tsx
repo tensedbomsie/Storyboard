@@ -16,36 +16,45 @@ import { supabase } from './lib/supabase'
 import type { StoryNode } from './types'
 import TextNode from './nodes/TextNode'
 import ImageNode from './nodes/ImageNode'
+import TimelineNode from './nodes/TimelineNode'
+import { SessionContext } from './SessionContext'
 
-const nodeTypes = { text: TextNode, image: ImageNode }
+const nodeTypes = { text: TextNode, image: ImageNode, timeline: TimelineNode }
 
 const randomColor = () =>
   ['#7c3aed', '#dc2626', '#059669', '#d97706', '#2563eb'][
     Math.floor(Math.random() * 5)
   ]
 
-export default function Board({ session }: { session: Session }) {
+export default function Board({
+  session,
+  boardId,
+  onBack,
+}: {
+  session: Session
+  boardId: string
+  onBack: () => void
+}) {
   const [nodes, setNodes, onNodesChange] = useNodesState<StoryNode>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const [loaded, setLoaded] = useState(false)
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
+    setLoaded(false)
     const load = async () => {
       const { data } = await supabase
         .from('boards')
         .select('nodes, edges')
-        .eq('owner', session.user.id)
+        .eq('id', boardId)
         .maybeSingle()
 
-      if (data) {
-        setNodes((data.nodes as StoryNode[]) ?? [])
-        setEdges((data.edges as Edge[]) ?? [])
-      }
+      setNodes((data?.nodes as StoryNode[]) ?? [])
+      setEdges((data?.edges as Edge[]) ?? [])
       setLoaded(true)
     }
     load()
-  }, [session.user.id, setNodes, setEdges])
+  }, [boardId, setNodes, setEdges])
 
   useEffect(() => {
     if (!loaded) return
@@ -53,15 +62,13 @@ export default function Board({ session }: { session: Session }) {
     saveTimeout.current = setTimeout(async () => {
       await supabase
         .from('boards')
-        .upsert(
-          { owner: session.user.id, nodes, edges, updated_at: new Date().toISOString() },
-          { onConflict: 'owner' },
-        )
+        .update({ nodes, edges, updated_at: new Date().toISOString() })
+        .eq('id', boardId)
     }, 800)
     return () => {
       if (saveTimeout.current) clearTimeout(saveTimeout.current)
     }
-  }, [nodes, edges, loaded, session.user.id])
+  }, [nodes, edges, loaded, boardId])
 
   const onConnect = useCallback(
     (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
@@ -77,47 +84,53 @@ export default function Board({ session }: { session: Session }) {
     [setEdges],
   )
 
-  const addNode = (type: 'text' | 'image') => {
+  const addNode = (type: 'text' | 'image' | 'timeline') => {
     const id = crypto.randomUUID()
+    const labels = { text: 'ไอเดียใหม่', image: 'รูปใหม่', timeline: 'เหตุการณ์ใหม่' }
     const newNode: StoryNode = {
       id,
       type,
       position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
       data: {
-        label: type === 'text' ? 'ไอเดียใหม่' : 'รูปใหม่',
+        label: labels[type],
         color: randomColor(),
         text: '',
         imageUrl: '',
+        date: '',
       },
     }
     setNodes((nds) => [...nds, newNode])
   }
 
   return (
-    <div className="board-page">
-      <div className="toolbar">
-        <button onClick={() => addNode('text')}>+ Text Node</button>
-        <button onClick={() => addNode('image')}>+ Image Node</button>
-        <span className="spacer" />
-        <span className="user-email">{session.user.email}</span>
-        <button onClick={() => supabase.auth.signOut()}>ออกจากระบบ</button>
+    <SessionContext.Provider value={{ userId: session.user.id }}>
+      <div className="board-page">
+        <div className="toolbar">
+          <button onClick={onBack}>← กระดานทั้งหมด</button>
+          <button onClick={() => addNode('text')}>+ Text Node</button>
+          <button onClick={() => addNode('image')}>+ Image Node</button>
+          <button onClick={() => addNode('timeline')}>+ Timeline Node</button>
+          <span className="spacer" />
+          <span className="user-email">{session.user.email}</span>
+          <button onClick={() => supabase.auth.signOut()}>ออกจากระบบ</button>
+        </div>
+        <div className="canvas">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={nodeTypes}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onEdgeDoubleClick={onEdgeDoubleClick}
+            fitView
+          >
+            <Background />
+            <Controls />
+            <MiniMap />
+          </ReactFlow>
+        </div>
       </div>
-      <div className="canvas">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onEdgeDoubleClick={onEdgeDoubleClick}
-          fitView
-        >
-          <Background />
-          <Controls />
-          <MiniMap />
-        </ReactFlow>
-      </div>
-    </div>
+    </SessionContext.Provider>
   )
 }

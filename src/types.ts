@@ -5,6 +5,13 @@ export type StoryNodeData = {
   color: string
   text?: string
   imageUrl?: string
+  date?: string
 }
 
 export type StoryNode = Node<StoryNodeData>
+
+export type BoardMeta = {
+  id: string
+  name: string
+  created_at: string
+}

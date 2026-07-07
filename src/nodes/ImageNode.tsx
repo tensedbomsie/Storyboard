@@ -1,13 +1,32 @@
+import { useState } from 'react'
 import { Handle, Position, type NodeProps, useReactFlow } from '@xyflow/react'
 import type { StoryNode } from '../types'
+import { supabase } from '../lib/supabase'
+import { useSessionContext } from '../SessionContext'
 
 export default function ImageNode({ id, data, selected }: NodeProps<StoryNode>) {
   const { setNodes } = useReactFlow()
+  const { userId } = useSessionContext()
+  const [uploading, setUploading] = useState(false)
 
   const update = (patch: Partial<StoryNode['data']>) => {
     setNodes((nodes) =>
       nodes.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...patch } } : n)),
     )
+  }
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setUploading(true)
+    const path = `${userId}/${id}-${Date.now()}-${file.name}`
+    const { error } = await supabase.storage.from('board-images').upload(path, file)
+    if (!error) {
+      const { data: pub } = supabase.storage.from('board-images').getPublicUrl(path)
+      update({ imageUrl: pub.publicUrl })
+    }
+    setUploading(false)
   }
 
   return (
@@ -34,14 +53,14 @@ export default function ImageNode({ id, data, selected }: NodeProps<StoryNode>) 
         {data.imageUrl ? (
           <img src={data.imageUrl} alt={data.label} />
         ) : (
-          <div className="story-node-image-placeholder">ไม่มีรูป</div>
+          <div className="story-node-image-placeholder">
+            {uploading ? 'กำลังอัปโหลด...' : 'ไม่มีรูป'}
+          </div>
         )}
-        <input
-          className="story-node-image-url"
-          value={data.imageUrl ?? ''}
-          onChange={(e) => update({ imageUrl: e.target.value })}
-          placeholder="วางลิงก์รูปภาพ..."
-        />
+        <label className="story-node-upload-btn">
+          อัปโหลดรูป
+          <input type="file" accept="image/*" onChange={handleFile} hidden />
+        </label>
       </div>
       <Handle type="source" position={Position.Bottom} />
     </div>
