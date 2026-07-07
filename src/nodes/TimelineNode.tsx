@@ -3,7 +3,7 @@ import type { StoryNode } from '../types'
 import { useStoryNode } from './useStoryNode'
 
 export default function TimelineNode({ id, data, selected }: NodeProps<StoryNode>) {
-  const { update, togglePin } = useStoryNode(id)
+  const { update, togglePin, sendToAnotherBoard } = useStoryNode(id)
 
   return (
     <div
@@ -26,6 +26,14 @@ export default function TimelineNode({ id, data, selected }: NodeProps<StoryNode
           onClick={togglePin}
         >
           📌
+        </button>
+        <button
+          type="button"
+          className="story-node-send nodrag"
+          title="ส่งไปบอร์ดอื่น"
+          onClick={sendToAnotherBoard}
+        >
+          📤
         </button>
         <input
           type="color"

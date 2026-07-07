@@ -6,7 +6,7 @@ import { useSessionContext } from '../SessionContext'
 import { useStoryNode } from './useStoryNode'
 
 export default function ImageNode({ id, data, selected }: NodeProps<StoryNode>) {
-  const { update, togglePin } = useStoryNode(id)
+  const { update, togglePin, sendToAnotherBoard } = useStoryNode(id)
   const { userId } = useSessionContext()
   const [uploading, setUploading] = useState(false)
 
@@ -45,6 +45,14 @@ export default function ImageNode({ id, data, selected }: NodeProps<StoryNode>) 
           onClick={togglePin}
         >
           📌
+        </button>
+        <button
+          type="button"
+          className="story-node-send nodrag"
+          title="ส่งไปบอร์ดอื่น"
+          onClick={sendToAnotherBoard}
+        >
+          📤
         </button>
         <input
           type="color"
