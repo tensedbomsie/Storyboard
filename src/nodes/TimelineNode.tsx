@@ -1,4 +1,4 @@
-import { Handle, Position, type NodeProps } from '@xyflow/react'
+import { Handle, NodeResizer, Position, type NodeProps } from '@xyflow/react'
 import type { StoryNode } from '../types'
 import { useStoryNode } from './useStoryNode'
 
@@ -10,6 +10,7 @@ export default function TimelineNode({ id, data, selected }: NodeProps<StoryNode
       className={`story-node${selected ? ' selected' : ''}${data.pinned ? ' pinned' : ''}`}
       style={{ borderColor: data.color }}
     >
+      <NodeResizer isVisible={selected} minWidth={200} minHeight={160} lineClassName="nodrag" handleClassName="nodrag" />
       <Handle type="target" position={Position.Left} />
       <div className="story-node-header" style={{ background: data.color }}>
         <input

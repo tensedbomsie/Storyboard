@@ -92,10 +92,14 @@ export default function Board({
   const addNode = (type: 'text' | 'image' | 'timeline') => {
     const id = crypto.randomUUID()
     const labels = { text: 'ไอเดียใหม่', image: 'รูปใหม่', timeline: 'เหตุการณ์ใหม่' }
+    const sizes = { text: [220, 180], image: [220, 260], timeline: [240, 200] } as const
+    const [width, height] = sizes[type]
     const newNode: StoryNode = {
       id,
       type,
       position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
+      width,
+      height,
       data: {
         label: labels[type],
         color: randomColor(),

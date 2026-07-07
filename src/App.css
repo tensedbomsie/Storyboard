@@ -81,7 +81,11 @@ body {
 }
 
 .story-node {
-  width: 220px;
+  width: 100%;
+  height: 100%;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
   border: 2px solid #7c3aed;
   border-radius: 8px;
   background: #1a1a20;
@@ -137,29 +141,38 @@ body {
 
 .story-node-text {
   width: 100%;
-  min-height: 80px;
+  flex: 1;
+  min-height: 60px;
   box-sizing: border-box;
   background: #14141a;
   color: #eee;
   border: none;
   padding: 0.5rem;
-  resize: vertical;
+  resize: none;
   font-family: inherit;
 }
 
 .story-node-image {
+  flex: 1;
   padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .story-node-image img {
   width: 100%;
+  flex: 1;
+  min-height: 0;
+  object-fit: cover;
   border-radius: 4px;
   display: block;
   margin-bottom: 0.4rem;
 }
 
 .story-node-image-placeholder {
-  height: 100px;
+  flex: 1;
+  min-height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -193,7 +206,11 @@ body {
 }
 
 .story-node-timeline {
+  flex: 1;
+  min-height: 0;
   padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .story-node-date {

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Handle, Position, type NodeProps } from '@xyflow/react'
+import { Handle, NodeResizer, Position, type NodeProps } from '@xyflow/react'
 import type { StoryNode } from '../types'
 import { supabase } from '../lib/supabase'
 import { useSessionContext } from '../SessionContext'
@@ -29,6 +29,7 @@ export default function ImageNode({ id, data, selected }: NodeProps<StoryNode>) 
       className={`story-node${selected ? ' selected' : ''}${data.pinned ? ' pinned' : ''}`}
       style={{ borderColor: data.color }}
     >
+      <NodeResizer isVisible={selected} minWidth={200} minHeight={180} lineClassName="nodrag" handleClassName="nodrag" />
       <Handle type="target" position={Position.Left} />
       <div className="story-node-header" style={{ background: data.color }}>
         <input
