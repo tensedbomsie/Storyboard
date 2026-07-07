@@ -1,0 +1,161 @@
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  background: #0f0f13;
+  color: #eee;
+}
+
+.login-page {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 280px;
+}
+
+.login-form input,
+.login-form button {
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #1a1a20;
+  color: #eee;
+}
+
+.login-form button {
+  background: #7c3aed;
+  border: none;
+  cursor: pointer;
+}
+
+.login-error {
+  color: #f87171;
+  font-size: 0.85rem;
+}
+
+.board-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #1a1a20;
+  border-bottom: 1px solid #2a2a33;
+}
+
+.toolbar button {
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #26262f;
+  color: #eee;
+  cursor: pointer;
+}
+
+.toolbar .spacer {
+  flex: 1;
+}
+
+.toolbar .user-email {
+  color: #999;
+  font-size: 0.85rem;
+}
+
+.canvas {
+  flex: 1;
+}
+
+.story-node {
+  width: 220px;
+  border: 2px solid #7c3aed;
+  border-radius: 8px;
+  background: #1a1a20;
+  overflow: hidden;
+}
+
+.story-node.selected {
+  box-shadow: 0 0 0 2px #fff3;
+}
+
+.story-node-header {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.5rem;
+}
+
+.story-node-title {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  min-width: 0;
+}
+
+.story-node-color {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.story-node-text {
+  width: 100%;
+  min-height: 80px;
+  box-sizing: border-box;
+  background: #14141a;
+  color: #eee;
+  border: none;
+  padding: 0.5rem;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.story-node-image {
+  padding: 0.5rem;
+}
+
+.story-node-image img {
+  width: 100%;
+  border-radius: 4px;
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.story-node-image-placeholder {
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  background: #14141a;
+  border-radius: 4px;
+  margin-bottom: 0.4rem;
+}
+
+.story-node-image-url {
+  width: 100%;
+  box-sizing: border-box;
+  background: #14141a;
+  color: #eee;
+  border: 1px solid #2a2a33;
+  border-radius: 4px;
+  padding: 0.35rem;
+}
