@@ -18,6 +18,7 @@ import TextNode from './nodes/TextNode'
 import ImageNode from './nodes/ImageNode'
 import TimelineNode from './nodes/TimelineNode'
 import { SessionContext } from './SessionContext'
+import { buildExportText } from './export'
 
 const nodeTypes = { text: TextNode, image: ImageNode, timeline: TimelineNode }
 
@@ -37,7 +38,10 @@ export default function Board({
 }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<StoryNode>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
+  const [boardName, setBoardName] = useState('')
   const [loaded, setLoaded] = useState(false)
+  const [exportText, setExportText] = useState<string | null>(null)
+  const [copyStatus, setCopyStatus] = useState<string | null>(null)
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -45,12 +49,13 @@ export default function Board({
     const load = async () => {
       const { data } = await supabase
         .from('boards')
-        .select('nodes, edges')
+        .select('nodes, edges, name')
         .eq('id', boardId)
         .maybeSingle()
 
       setNodes((data?.nodes as StoryNode[]) ?? [])
       setEdges((data?.edges as Edge[]) ?? [])
+      setBoardName(data?.name ?? '')
       setLoaded(true)
     }
     load()
@@ -102,6 +107,21 @@ export default function Board({
     setNodes((nds) => [...nds, newNode])
   }
 
+  const openExport = () => {
+    setCopyStatus(null)
+    setExportText(buildExportText(boardName, nodes, edges))
+  }
+
+  const copyExport = async () => {
+    if (!exportText) return
+    try {
+      await navigator.clipboard.writeText(exportText)
+      setCopyStatus('คัดลอกแล้ว!')
+    } catch {
+      setCopyStatus('คัดลอกอัตโนมัติไม่ได้ กรุณาเลือกข้อความแล้วกด Ctrl+C เอง')
+    }
+  }
+
   return (
     <SessionContext.Provider value={{ userId: session.user.id }}>
       <div className="board-page">
@@ -110,6 +130,7 @@ export default function Board({
           <button onClick={() => addNode('text')}>+ Text Node</button>
           <button onClick={() => addNode('image')}>+ Image Node</button>
           <button onClick={() => addNode('timeline')}>+ Timeline Node</button>
+          <button onClick={openExport}>Export</button>
           <span className="spacer" />
           <span className="user-email">{session.user.email}</span>
           <button onClick={() => supabase.auth.signOut()}>ออกจากระบบ</button>
@@ -130,6 +151,21 @@ export default function Board({
             <MiniMap />
           </ReactFlow>
         </div>
+        {exportText !== null && (
+          <div className="export-modal-backdrop" onClick={() => setExportText(null)}>
+            <div className="export-modal" onClick={(e) => e.stopPropagation()}>
+              <h2>Export storyboard</h2>
+              <p>คัดลอกข้อความนี้ไปวางให้ ChatGPT หรือ Claude ช่วยเกลาเนื้อเรื่องได้เลย</p>
+              <textarea readOnly value={exportText} onFocus={(e) => e.target.select()} />
+              <div className="export-modal-actions">
+                {copyStatus && <span className="export-status">{copyStatus}</span>}
+                <span className="spacer" />
+                <button onClick={copyExport}>คัดลอก</button>
+                <button onClick={() => setExportText(null)}>ปิด</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </SessionContext.Provider>
   )
