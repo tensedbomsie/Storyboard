@@ -1,9 +1,13 @@
 import { Handle, NodeResizer, Position, type NodeProps } from '@xyflow/react'
 import type { StoryNode } from '../types'
 import { useStoryNode } from './useStoryNode'
+import { useCursorPreserve } from './useCursorPreserve'
 
 export default function TimelineNode({ id, data, selected }: NodeProps<StoryNode>) {
   const { update, togglePin, sendToAnotherBoard } = useStoryNode(id)
+  const title = useCursorPreserve<HTMLInputElement>()
+  const date = useCursorPreserve<HTMLInputElement>()
+  const text = useCursorPreserve<HTMLTextAreaElement>()
 
   return (
     <div
@@ -14,9 +18,13 @@ export default function TimelineNode({ id, data, selected }: NodeProps<StoryNode
       <Handle type="target" position={Position.Left} />
       <div className="story-node-header" style={{ background: data.color }}>
         <input
+          ref={title.ref}
           className="story-node-title"
           value={data.label}
-          onChange={(e) => update({ label: e.target.value })}
+          onChange={(e) => {
+            title.captureCursor(e)
+            update({ label: e.target.value })
+          }}
           placeholder="ชื่อเหตุการณ์"
         />
         <button
@@ -44,16 +52,24 @@ export default function TimelineNode({ id, data, selected }: NodeProps<StoryNode
       </div>
       <div className="story-node-timeline nodrag">
         <input
+          ref={date.ref}
           type="text"
           className="story-node-date"
           value={data.date ?? ''}
-          onChange={(e) => update({ date: e.target.value })}
+          onChange={(e) => {
+            date.captureCursor(e)
+            update({ date: e.target.value })
+          }}
           placeholder="เวลา/ลำดับ เช่น วันที่ 3, ก่อนฉากเปิด"
         />
         <textarea
+          ref={text.ref}
           className="story-node-text"
           value={data.text ?? ''}
-          onChange={(e) => update({ text: e.target.value })}
+          onChange={(e) => {
+            text.captureCursor(e)
+            update({ text: e.target.value })
+          }}
           placeholder="รายละเอียดเหตุการณ์..."
         />
       </div>

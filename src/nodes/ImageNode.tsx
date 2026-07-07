@@ -4,11 +4,13 @@ import type { StoryNode } from '../types'
 import { supabase } from '../lib/supabase'
 import { useSessionContext } from '../SessionContext'
 import { useStoryNode } from './useStoryNode'
+import { useCursorPreserve } from './useCursorPreserve'
 
 export default function ImageNode({ id, data, selected }: NodeProps<StoryNode>) {
   const { update, togglePin, sendToAnotherBoard } = useStoryNode(id)
   const { userId } = useSessionContext()
   const [uploading, setUploading] = useState(false)
+  const title = useCursorPreserve<HTMLInputElement>()
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -33,9 +35,13 @@ export default function ImageNode({ id, data, selected }: NodeProps<StoryNode>) 
       <Handle type="target" position={Position.Left} />
       <div className="story-node-header" style={{ background: data.color }}>
         <input
+          ref={title.ref}
           className="story-node-title"
           value={data.label}
-          onChange={(e) => update({ label: e.target.value })}
+          onChange={(e) => {
+            title.captureCursor(e)
+            update({ label: e.target.value })
+          }}
           placeholder="ชื่อ node"
         />
         <button
