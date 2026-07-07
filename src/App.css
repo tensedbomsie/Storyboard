@@ -92,6 +92,25 @@ body {
   box-shadow: 0 0 0 2px #fff3;
 }
 
+.story-node.pinned {
+  box-shadow: 0 0 0 2px #fbbf24, 0 4px 12px rgba(251, 191, 36, 0.35);
+}
+
+.story-node-pin {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0 0.2rem;
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+
+.story-node.pinned .story-node-pin {
+  opacity: 1;
+  filter: none;
+}
+
 .story-node-header {
   display: flex;
   align-items: center;

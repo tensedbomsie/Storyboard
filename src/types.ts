@@ -6,6 +6,7 @@ export type StoryNodeData = {
   text?: string
   imageUrl?: string
   date?: string
+  pinned?: boolean
 }
 
 export type StoryNode = Node<StoryNodeData>

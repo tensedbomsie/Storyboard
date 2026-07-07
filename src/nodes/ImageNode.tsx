@@ -1,19 +1,14 @@
 import { useState } from 'react'
-import { Handle, Position, type NodeProps, useReactFlow } from '@xyflow/react'
+import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { StoryNode } from '../types'
 import { supabase } from '../lib/supabase'
 import { useSessionContext } from '../SessionContext'
+import { useStoryNode } from './useStoryNode'
 
 export default function ImageNode({ id, data, selected }: NodeProps<StoryNode>) {
-  const { setNodes } = useReactFlow()
+  const { update, togglePin } = useStoryNode(id)
   const { userId } = useSessionContext()
   const [uploading, setUploading] = useState(false)
-
-  const update = (patch: Partial<StoryNode['data']>) => {
-    setNodes((nodes) =>
-      nodes.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...patch } } : n)),
-    )
-  }
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -31,10 +26,10 @@ export default function ImageNode({ id, data, selected }: NodeProps<StoryNode>) 
 
   return (
     <div
-      className={`story-node${selected ? ' selected' : ''}`}
+      className={`story-node${selected ? ' selected' : ''}${data.pinned ? ' pinned' : ''}`}
       style={{ borderColor: data.color }}
     >
-      <Handle type="target" position={Position.Top} />
+      <Handle type="target" position={Position.Left} />
       <div className="story-node-header" style={{ background: data.color }}>
         <input
           className="story-node-title"
@@ -42,6 +37,14 @@ export default function ImageNode({ id, data, selected }: NodeProps<StoryNode>) 
           onChange={(e) => update({ label: e.target.value })}
           placeholder="ชื่อ node"
         />
+        <button
+          type="button"
+          className="story-node-pin nodrag"
+          title={data.pinned ? 'เลิกปักหมุด' : 'ปักหมุด'}
+          onClick={togglePin}
+        >
+          📌
+        </button>
         <input
           type="color"
           className="story-node-color"
@@ -62,7 +65,7 @@ export default function ImageNode({ id, data, selected }: NodeProps<StoryNode>) 
           <input type="file" accept="image/*" onChange={handleFile} hidden />
         </label>
       </div>
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="source" position={Position.Right} />
     </div>
   )
 }
