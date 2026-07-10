@@ -30,5 +30,20 @@ export function useStoryNode(id: string) {
     })
   }
 
-  return { update, togglePin, sendToAnotherBoard }
+  const duplicate = () => {
+    setNodes((nodes) => {
+      const node = nodes.find((n) => n.id === id)
+      if (!node) return nodes
+      const copy = {
+        ...node,
+        id: crypto.randomUUID(),
+        selected: false,
+        dragging: false,
+        position: { x: node.position.x + 30, y: node.position.y + 30 },
+      }
+      return [...nodes, copy]
+    })
+  }
+
+  return { update, togglePin, sendToAnotherBoard, duplicate }
 }

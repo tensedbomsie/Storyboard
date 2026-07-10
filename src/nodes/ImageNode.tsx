@@ -7,7 +7,7 @@ import { useStoryNode } from './useStoryNode'
 import { useCursorPreserve } from './useCursorPreserve'
 
 export default function ImageNode({ id, data, selected }: NodeProps<StoryNode>) {
-  const { update, togglePin, sendToAnotherBoard } = useStoryNode(id)
+  const { update, togglePin, sendToAnotherBoard, duplicate } = useStoryNode(id)
   const { userId } = useSessionContext()
   const [uploading, setUploading] = useState(false)
   const title = useCursorPreserve<HTMLInputElement>()
@@ -59,6 +59,14 @@ export default function ImageNode({ id, data, selected }: NodeProps<StoryNode>) 
           onClick={sendToAnotherBoard}
         >
           📤
+        </button>
+        <button
+          type="button"
+          className="story-node-duplicate nodrag"
+          title="ทำสำเนา node"
+          onClick={duplicate}
+        >
+          ⧉
         </button>
         <input
           type="color"

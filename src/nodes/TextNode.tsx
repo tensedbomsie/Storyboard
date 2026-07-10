@@ -4,7 +4,7 @@ import { useStoryNode } from './useStoryNode'
 import { useCursorPreserve } from './useCursorPreserve'
 
 export default function TextNode({ id, data, selected }: NodeProps<StoryNode>) {
-  const { update, togglePin, sendToAnotherBoard } = useStoryNode(id)
+  const { update, togglePin, sendToAnotherBoard, duplicate } = useStoryNode(id)
   const title = useCursorPreserve<HTMLInputElement>()
   const text = useCursorPreserve<HTMLTextAreaElement>()
 
@@ -41,6 +41,14 @@ export default function TextNode({ id, data, selected }: NodeProps<StoryNode>) {
           onClick={sendToAnotherBoard}
         >
           📤
+        </button>
+        <button
+          type="button"
+          className="story-node-duplicate nodrag"
+          title="ทำสำเนา node"
+          onClick={duplicate}
+        >
+          ⧉
         </button>
         <input
           type="color"
