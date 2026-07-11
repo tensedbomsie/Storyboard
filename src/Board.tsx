@@ -167,7 +167,7 @@ export default function Board({
     <SessionContext.Provider value={{ userId: session.user.id }}>
       <NodesContext.Provider value={{ setNodes }}>
       <BoardActionsContext.Provider value={{ openSendNode }}>
-        <div className="board-page">
+        <div className="board-page fade-in">
           <div className="toolbar">
             <button onClick={onBack}>← กระดานทั้งหมด</button>
             <button onClick={() => addNode('text')}>+ Text Node</button>

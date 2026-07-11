@@ -51,7 +51,7 @@ export default function BoardList({
   }
 
   return (
-    <div className="board-list-page">
+    <div className="board-list-page fade-in">
       <div className="toolbar">
         <h1>Storyboard ของคุณ</h1>
         <span className="spacer" />
