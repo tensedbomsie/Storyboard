@@ -509,6 +509,28 @@ textarea {
   -webkit-backdrop-filter: blur(14px);
 }
 
+.export-mode-toggle {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.export-mode-toggle button {
+  padding: 0.35rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.export-mode-toggle button.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #06120c;
+  font-weight: 600;
+  border-color: transparent;
+}
+
 .export-modal h2 {
   margin: 0;
   font-size: 1.1rem;

@@ -20,7 +20,7 @@ import TimelineNode from './nodes/TimelineNode'
 import { SessionContext } from './SessionContext'
 import { BoardActionsContext } from './BoardActionsContext'
 import { NodesContext } from './NodesContext'
-import { buildExportText } from './export'
+import { buildExportText, buildBackupText, parseBackupText } from './export'
 
 const nodeTypes = { text: TextNode, image: ImageNode, timeline: TimelineNode }
 
@@ -42,8 +42,11 @@ export default function Board({
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const [boardName, setBoardName] = useState('')
   const [loaded, setLoaded] = useState(false)
-  const [exportText, setExportText] = useState<string | null>(null)
+  const [exportMode, setExportMode] = useState<'ai' | 'backup' | null>(null)
   const [copyStatus, setCopyStatus] = useState<string | null>(null)
+  const [importOpen, setImportOpen] = useState(false)
+  const [importText, setImportText] = useState('')
+  const [importStatus, setImportStatus] = useState<string | null>(null)
   const [sendNode, setSendNode] = useState<StoryNode | null>(null)
   const [otherBoards, setOtherBoards] = useState<BoardMeta[]>([])
   const [sendStatus, setSendStatus] = useState<string | null>(null)
@@ -136,16 +139,53 @@ export default function Board({
 
   const openExport = () => {
     setCopyStatus(null)
-    setExportText(buildExportText(boardName, nodes, edges))
+    setExportMode('ai')
   }
 
+  const currentExportText =
+    exportMode === 'ai'
+      ? buildExportText(boardName, nodes, edges)
+      : exportMode === 'backup'
+        ? buildBackupText(boardName, nodes, edges)
+        : ''
+
   const copyExport = async () => {
-    if (!exportText) return
     try {
-      await navigator.clipboard.writeText(exportText)
+      await navigator.clipboard.writeText(currentExportText)
       setCopyStatus('คัดลอกแล้ว!')
     } catch {
       setCopyStatus('คัดลอกอัตโนมัติไม่ได้ กรุณาเลือกข้อความแล้วกด Ctrl+C เอง')
+    }
+  }
+
+  const openImport = () => {
+    setImportText('')
+    setImportStatus(null)
+    setImportOpen(true)
+  }
+
+  const runImport = () => {
+    try {
+      const { nodes: importedNodes, edges: importedEdges } = parseBackupText(importText)
+      const idMap = new Map<string, string>()
+      const newNodes: StoryNode[] = importedNodes.map((n) => {
+        const newId = crypto.randomUUID()
+        idMap.set(n.id, newId)
+        return { ...n, id: newId, selected: false, dragging: false }
+      })
+      const newEdges: Edge[] = importedEdges
+        .filter((e) => idMap.has(e.source) && idMap.has(e.target))
+        .map((e) => ({
+          ...e,
+          id: crypto.randomUUID(),
+          source: idMap.get(e.source)!,
+          target: idMap.get(e.target)!,
+        }))
+      setNodes((nds) => [...nds, ...newNodes])
+      setEdges((eds) => [...eds, ...newEdges])
+      setImportStatus(`นำเข้าแล้ว ${newNodes.length} node, ${newEdges.length} เส้นเชื่อม`)
+    } catch {
+      setImportStatus('ไฟล์ไม่ถูกต้อง กรุณาวางข้อความจาก "Export → สำรองข้อมูล (JSON)" ของบอร์ดนี้เท่านั้น')
     }
   }
 
@@ -195,6 +235,7 @@ export default function Board({
             <button onClick={() => addNode('image')}>+ Image Node</button>
             <button onClick={() => addNode('timeline')}>+ Timeline Node</button>
             <button onClick={openExport}>Export</button>
+            <button onClick={openImport}>Import</button>
             {conflict && (
               <span className="conflict-warning">
                 ⚠️ มีการแก้ไขจากแท็บ/เครื่องอื่นที่ใหม่กว่า การเปลี่ยนแปลงในแท็บนี้ยังไม่ถูกบันทึก
@@ -221,17 +262,54 @@ export default function Board({
               <MiniMap />
             </ReactFlow>
           </div>
-          {exportText !== null && (
-            <div className="export-modal-backdrop" onClick={() => setExportText(null)}>
+          {exportMode !== null && (
+            <div className="export-modal-backdrop" onClick={() => setExportMode(null)}>
               <div className="export-modal" onClick={(e) => e.stopPropagation()}>
                 <h2>Export storyboard</h2>
-                <p>คัดลอกข้อความนี้ไปวางให้ ChatGPT หรือ Claude ช่วยเกลาเนื้อเรื่องได้เลย</p>
-                <textarea readOnly value={exportText} onFocus={(e) => e.target.select()} />
+                <div className="export-mode-toggle">
+                  <button
+                    className={exportMode === 'ai' ? 'active' : ''}
+                    onClick={() => { setExportMode('ai'); setCopyStatus(null) }}
+                  >
+                    ข้อความสำหรับ AI
+                  </button>
+                  <button
+                    className={exportMode === 'backup' ? 'active' : ''}
+                    onClick={() => { setExportMode('backup'); setCopyStatus(null) }}
+                  >
+                    สำรองข้อมูล (JSON)
+                  </button>
+                </div>
+                <p>
+                  {exportMode === 'ai'
+                    ? 'คัดลอกข้อความนี้ไปวางให้ ChatGPT หรือ Claude ช่วยเกลาเนื้อเรื่องได้เลย'
+                    : 'ไฟล์นี้ import กลับเข้าบอร์ดได้แม่นยำ (เก็บตำแหน่ง สี ขนาดครบ) เก็บไว้ backup หรือย้ายไปบอร์ดอื่นได้'}
+                </p>
+                <textarea readOnly value={currentExportText} onFocus={(e) => e.target.select()} />
                 <div className="export-modal-actions">
                   {copyStatus && <span className="export-status">{copyStatus}</span>}
                   <span className="spacer" />
                   <button onClick={copyExport}>คัดลอก</button>
-                  <button onClick={() => setExportText(null)}>ปิด</button>
+                  <button onClick={() => setExportMode(null)}>ปิด</button>
+                </div>
+              </div>
+            </div>
+          )}
+          {importOpen && (
+            <div className="export-modal-backdrop" onClick={() => setImportOpen(false)}>
+              <div className="export-modal" onClick={(e) => e.stopPropagation()}>
+                <h2>Import ข้อมูลเข้าบอร์ด</h2>
+                <p>วางข้อความจาก "Export → สำรองข้อมูล (JSON)" ที่คัดลอกไว้ก่อนหน้า — จะถูกเพิ่มเข้าบอร์ดนี้เป็น node ใหม่ (ของเดิมในบอร์ดยังอยู่)</p>
+                <textarea
+                  value={importText}
+                  onChange={(e) => setImportText(e.target.value)}
+                  placeholder='วางข้อความ JSON ที่ export มาที่นี่'
+                />
+                <div className="export-modal-actions">
+                  {importStatus && <span className="export-status">{importStatus}</span>}
+                  <span className="spacer" />
+                  <button onClick={runImport} disabled={!importText.trim()}>นำเข้า</button>
+                  <button onClick={() => setImportOpen(false)}>ปิด</button>
                 </div>
               </div>
             </div>

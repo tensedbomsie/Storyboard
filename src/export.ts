@@ -29,3 +29,24 @@ export function buildExportText(boardName: string, nodes: StoryNode[], edges: Ed
 
   return lines.join('\n')
 }
+
+export type BackupPayload = {
+  format: 'storyboard-backup'
+  version: 1
+  boardName: string
+  nodes: StoryNode[]
+  edges: Edge[]
+}
+
+export function buildBackupText(boardName: string, nodes: StoryNode[], edges: Edge[]) {
+  const payload: BackupPayload = { format: 'storyboard-backup', version: 1, boardName, nodes, edges }
+  return JSON.stringify(payload, null, 2)
+}
+
+export function parseBackupText(text: string): { nodes: StoryNode[]; edges: Edge[] } {
+  const parsed = JSON.parse(text)
+  if (parsed?.format !== 'storyboard-backup' || !Array.isArray(parsed.nodes)) {
+    throw new Error('invalid backup format')
+  }
+  return { nodes: parsed.nodes, edges: Array.isArray(parsed.edges) ? parsed.edges : [] }
+}
