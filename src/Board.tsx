@@ -137,6 +137,12 @@ export default function Board({
     setNodes((nds) => [...nds, newNode])
   }
 
+  const selectedNodes = nodes.filter((n) => n.selected)
+
+  const applyColorToSelection = (color: string) => {
+    setNodes((nds) => nds.map((n) => (n.selected ? { ...n, data: { ...n.data, color } } : n)))
+  }
+
   const openExport = () => {
     setCopyStatus(null)
     setExportMode('ai')
@@ -236,6 +242,17 @@ export default function Board({
             <button onClick={() => addNode('timeline')}>+ Timeline Node</button>
             <button onClick={openExport}>Export</button>
             <button onClick={openImport}>Import</button>
+            {selectedNodes.length > 1 && (
+              <span className="batch-color">
+                เปลี่ยนสี {selectedNodes.length} node ที่เลือก
+                <input
+                  type="color"
+                  value={selectedNodes[0].data.color}
+                  onChange={(e) => applyColorToSelection(e.target.value)}
+                  title="เปลี่ยนสี node ที่เลือกทั้งหมด"
+                />
+              </span>
+            )}
             {conflict && (
               <span className="conflict-warning">
                 ⚠️ มีการแก้ไขจากแท็บ/เครื่องอื่นที่ใหม่กว่า การเปลี่ยนแปลงในแท็บนี้ยังไม่ถูกบันทึก

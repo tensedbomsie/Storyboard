@@ -173,6 +173,27 @@ textarea {
   flex: 1;
 }
 
+.batch-color {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 10px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid var(--accent-2);
+  color: var(--text);
+  font-size: 0.8rem;
+}
+
+.batch-color input[type='color'] {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
 .conflict-warning {
   display: flex;
   align-items: center;
