@@ -47,38 +47,56 @@ export default function Board({
   const [sendNode, setSendNode] = useState<StoryNode | null>(null)
   const [otherBoards, setOtherBoards] = useState<BoardMeta[]>([])
   const [sendStatus, setSendStatus] = useState<string | null>(null)
+  const [conflict, setConflict] = useState(false)
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastKnownUpdatedAt = useRef<string | null>(null)
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     setLoaded(false)
-    const load = async () => {
-      const { data } = await supabase
-        .from('boards')
-        .select('nodes, edges, name')
-        .eq('id', boardId)
-        .maybeSingle()
+    const { data } = await supabase
+      .from('boards')
+      .select('nodes, edges, name, updated_at')
+      .eq('id', boardId)
+      .maybeSingle()
 
-      setNodes((data?.nodes as StoryNode[]) ?? [])
-      setEdges((data?.edges as Edge[]) ?? [])
-      setBoardName(data?.name ?? '')
-      setLoaded(true)
-    }
-    load()
+    setNodes((data?.nodes as StoryNode[]) ?? [])
+    setEdges((data?.edges as Edge[]) ?? [])
+    setBoardName(data?.name ?? '')
+    lastKnownUpdatedAt.current = data?.updated_at ?? null
+    setConflict(false)
+    setLoaded(true)
   }, [boardId, setNodes, setEdges])
 
   useEffect(() => {
-    if (!loaded) return
+    load()
+  }, [load])
+
+  useEffect(() => {
+    if (!loaded || conflict) return
     if (saveTimeout.current) clearTimeout(saveTimeout.current)
     saveTimeout.current = setTimeout(async () => {
-      await supabase
+      const newUpdatedAt = new Date().toISOString()
+      let query = supabase
         .from('boards')
-        .update({ nodes, edges, updated_at: new Date().toISOString() })
+        .update({ nodes, edges, updated_at: newUpdatedAt })
         .eq('id', boardId)
+      // optimistic concurrency: only overwrite if no one else has saved since we loaded
+      if (lastKnownUpdatedAt.current) {
+        query = query.eq('updated_at', lastKnownUpdatedAt.current)
+      }
+      const { data } = await query.select('updated_at').maybeSingle()
+
+      if (!data) {
+        // another tab/session saved a newer version first — don't clobber it
+        setConflict(true)
+      } else {
+        lastKnownUpdatedAt.current = data.updated_at
+      }
     }, 800)
     return () => {
       if (saveTimeout.current) clearTimeout(saveTimeout.current)
     }
-  }, [nodes, edges, loaded, boardId])
+  }, [nodes, edges, loaded, conflict, boardId])
 
   const onConnect = useCallback(
     (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
@@ -177,6 +195,12 @@ export default function Board({
             <button onClick={() => addNode('image')}>+ Image Node</button>
             <button onClick={() => addNode('timeline')}>+ Timeline Node</button>
             <button onClick={openExport}>Export</button>
+            {conflict && (
+              <span className="conflict-warning">
+                ⚠️ มีการแก้ไขจากแท็บ/เครื่องอื่นที่ใหม่กว่า การเปลี่ยนแปลงในแท็บนี้ยังไม่ถูกบันทึก
+                <button onClick={load}>โหลดเวอร์ชันล่าสุด</button>
+              </span>
+            )}
             <span className="spacer" />
             <span className="user-email">{session.user.email}</span>
             <button onClick={() => supabase.auth.signOut()}>ออกจากระบบ</button>

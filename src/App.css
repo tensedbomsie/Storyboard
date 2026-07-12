@@ -173,6 +173,28 @@ textarea {
   flex: 1;
 }
 
+.conflict-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 10px;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  font-size: 0.8rem;
+}
+
+.conflict-warning button {
+  padding: 0.25rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--danger);
+  background: rgba(248, 113, 113, 0.15);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.78rem;
+}
+
 .hub-link {
   display: flex;
   align-items: center;
