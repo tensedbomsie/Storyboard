@@ -53,6 +53,9 @@ export default function BoardList({
   return (
     <div className="board-list-page fade-in">
       <div className="toolbar">
+        <a className="hub-link" href="https://tensedbomsie.github.io/SatoruHUB/" title="กลับไป Satoru HUB">
+          🏠
+        </a>
         <h1>Storyboard ของคุณ</h1>
         <span className="spacer" />
         <span className="user-email">{session.user.email}</span>

@@ -169,6 +169,9 @@ export default function Board({
       <BoardActionsContext.Provider value={{ openSendNode }}>
         <div className="board-page fade-in">
           <div className="toolbar">
+            <a className="hub-link" href="https://tensedbomsie.github.io/SatoruHUB/" title="กลับไป Satoru HUB">
+              🏠
+            </a>
             <button onClick={onBack}>← กระดานทั้งหมด</button>
             <button onClick={() => addNode('text')}>+ Text Node</button>
             <button onClick={() => addNode('image')}>+ Image Node</button>
