@@ -500,6 +500,21 @@ textarea {
   font-size: 0.8rem;
 }
 
+.board-card-delete {
+  flex: 0 0 auto !important;
+  width: 30px;
+  padding: 0.3rem 0 !important;
+  color: var(--text-dim) !important;
+  opacity: 0.6;
+}
+
+.board-card-delete:hover {
+  opacity: 1;
+  color: var(--danger) !important;
+  border-color: var(--danger) !important;
+  background: rgba(248, 113, 113, 0.1) !important;
+}
+
 .board-card-actions button:hover {
   background: rgba(255, 255, 255, 0.09);
 }

@@ -73,7 +73,7 @@ export default function BoardList({
             </div>
             <div className="board-card-actions">
               <button onClick={() => renameBoard(board)}>เปลี่ยนชื่อ</button>
-              <button onClick={() => deleteBoard(board)}>ลบ</button>
+              <button className="board-card-delete" title="ลบกระดาน" onClick={() => deleteBoard(board)}>🗑</button>
             </div>
           </div>
         ))}
