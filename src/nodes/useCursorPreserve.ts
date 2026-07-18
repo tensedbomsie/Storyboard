@@ -6,11 +6,12 @@ export function useCursorPreserve<T extends HTMLInputElement | HTMLTextAreaEleme
   const dirtyRef = useRef(false)
 
   useLayoutEffect(() => {
-    if (dirtyRef.current && ref.current && posRef.current !== null && document.activeElement === ref.current) {
+    if (!dirtyRef.current) return
+    if (ref.current && posRef.current !== null && document.activeElement === ref.current) {
       ref.current.selectionStart = posRef.current
       ref.current.selectionEnd = posRef.current
+      dirtyRef.current = false
     }
-    dirtyRef.current = false
   })
 
   const captureCursor = (e: ChangeEvent<T>) => {
