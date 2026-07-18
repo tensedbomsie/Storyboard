@@ -54,6 +54,10 @@ export default function Board({
   const [conflict, setConflict] = useState(false)
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastKnownUpdatedAt = useRef<string | null>(null)
+  const historyRef = useRef<{ nodes: StoryNode[]; edges: Edge[] }[]>([])
+  const historyIndexRef = useRef(-1)
+  const historyTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [, setHistoryTick] = useState(0)
 
   const load = useCallback(async () => {
     setLoaded(false)
@@ -74,6 +78,74 @@ export default function Board({
   useEffect(() => {
     load()
   }, [load])
+
+  // reset undo/redo history whenever a (re)load completes
+  useEffect(() => {
+    if (!loaded) return
+    historyRef.current = [{ nodes, edges }]
+    historyIndexRef.current = 0
+    setHistoryTick((t) => t + 1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded])
+
+  // debounce-record a new undo step after edits settle; skip if nodes/edges
+  // are the exact same references already at the current history position
+  // (i.e. this render was caused by undo/redo navigating, not a new edit)
+  useEffect(() => {
+    if (!loaded) return
+    const current = historyRef.current[historyIndexRef.current]
+    if (current && current.nodes === nodes && current.edges === edges) return
+    if (historyTimeout.current) clearTimeout(historyTimeout.current)
+    historyTimeout.current = setTimeout(() => {
+      const truncated = historyRef.current.slice(0, historyIndexRef.current + 1)
+      truncated.push({ nodes, edges })
+      if (truncated.length > 50) truncated.shift()
+      historyRef.current = truncated
+      historyIndexRef.current = truncated.length - 1
+      setHistoryTick((t) => t + 1)
+    }, 500)
+    return () => {
+      if (historyTimeout.current) clearTimeout(historyTimeout.current)
+    }
+  }, [nodes, edges, loaded])
+
+  const canUndo = historyIndexRef.current > 0
+  const canRedo = historyIndexRef.current < historyRef.current.length - 1
+
+  const undo = useCallback(() => {
+    if (historyIndexRef.current <= 0) return
+    historyIndexRef.current -= 1
+    const snap = historyRef.current[historyIndexRef.current]
+    setNodes(snap.nodes)
+    setEdges(snap.edges)
+    setHistoryTick((t) => t + 1)
+  }, [setNodes, setEdges])
+
+  const redo = useCallback(() => {
+    if (historyIndexRef.current >= historyRef.current.length - 1) return
+    historyIndexRef.current += 1
+    const snap = historyRef.current[historyIndexRef.current]
+    setNodes(snap.nodes)
+    setEdges(snap.edges)
+    setHistoryTick((t) => t + 1)
+  }, [setNodes, setEdges])
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return
+      const key = e.key.toLowerCase()
+      if ((e.ctrlKey || e.metaKey) && key === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        undo()
+      } else if ((e.ctrlKey || e.metaKey) && (key === 'y' || (key === 'z' && e.shiftKey))) {
+        e.preventDefault()
+        redo()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [undo, redo])
 
   useEffect(() => {
     if (!loaded || conflict) return
@@ -242,6 +314,8 @@ export default function Board({
             <button onClick={() => addNode('text')}>+ Text Node</button>
             <button onClick={() => addNode('image')}>+ Image Node</button>
             <button onClick={() => addNode('timeline')}>+ Timeline Node</button>
+            <button onClick={undo} disabled={!canUndo} title="เลิกทำ (Ctrl+Z)">↶ Undo</button>
+            <button onClick={redo} disabled={!canRedo} title="ทำซ้ำ (Ctrl+Y)">↷ Redo</button>
             <button onClick={openExport}>Export</button>
             <button onClick={openImport}>Import</button>
             {selectedNodes.length > 1 && (

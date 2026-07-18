@@ -169,6 +169,15 @@ select option {
   background: rgba(255, 255, 255, 0.08);
 }
 
+.toolbar button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.toolbar button:disabled:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .toolbar .spacer {
   flex: 1;
 }
