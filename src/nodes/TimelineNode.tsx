@@ -18,13 +18,9 @@ export default function TimelineNode({ id, data, selected }: NodeProps<StoryNode
       <Handle type="target" position={Position.Left} />
       <div className="story-node-header" style={{ background: data.color }}>
         <input
-          ref={title.ref}
           className="story-node-title"
           value={data.label}
-          onChange={(e) => {
-            title.captureCursor(e)
-            update({ label: e.target.value })
-          }}
+          onChange={(e) => title.handleChange(e, (v) => update({ label: v }))}
           placeholder="ชื่อเหตุการณ์"
         />
         <button
@@ -60,24 +56,16 @@ export default function TimelineNode({ id, data, selected }: NodeProps<StoryNode
       </div>
       <div className="story-node-timeline nodrag">
         <input
-          ref={date.ref}
           type="text"
           className="story-node-date"
           value={data.date ?? ''}
-          onChange={(e) => {
-            date.captureCursor(e)
-            update({ date: e.target.value })
-          }}
+          onChange={(e) => date.handleChange(e, (v) => update({ date: v }))}
           placeholder="เวลา/ลำดับ เช่น วันที่ 3, ก่อนฉากเปิด"
         />
         <textarea
-          ref={text.ref}
           className="story-node-text"
           value={data.text ?? ''}
-          onChange={(e) => {
-            text.captureCursor(e)
-            update({ text: e.target.value })
-          }}
+          onChange={(e) => text.handleChange(e, (v) => update({ text: v }))}
           placeholder="รายละเอียดเหตุการณ์..."
         />
       </div>

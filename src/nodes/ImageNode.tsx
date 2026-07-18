@@ -35,13 +35,9 @@ export default function ImageNode({ id, data, selected }: NodeProps<StoryNode>) 
       <Handle type="target" position={Position.Left} />
       <div className="story-node-header" style={{ background: data.color }}>
         <input
-          ref={title.ref}
           className="story-node-title"
           value={data.label}
-          onChange={(e) => {
-            title.captureCursor(e)
-            update({ label: e.target.value })
-          }}
+          onChange={(e) => title.handleChange(e, (v) => update({ label: v }))}
           placeholder="ชื่อ node"
         />
         <button
