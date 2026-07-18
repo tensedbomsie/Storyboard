@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
 import type { BoardMeta } from './types'
+import AppSwitcher from './AppSwitcher'
 
 export default function BoardList({
   session,
@@ -56,6 +57,7 @@ export default function BoardList({
         <a className="hub-link" href="https://tensedbomsie.github.io/SatoruHUB/" title="กลับไป Satoru HUB">
           🏠
         </a>
+        <AppSwitcher current="Storyboard" />
         <h1>Storyboard ของคุณ</h1>
         <span className="spacer" />
         <span className="user-email">{session.user.email}</span>

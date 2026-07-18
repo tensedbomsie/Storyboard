@@ -21,6 +21,7 @@ import { SessionContext } from './SessionContext'
 import { BoardActionsContext } from './BoardActionsContext'
 import { NodesContext } from './NodesContext'
 import { buildExportText, buildBackupText, parseBackupText } from './export'
+import AppSwitcher from './AppSwitcher'
 
 const nodeTypes = { text: TextNode, image: ImageNode, timeline: TimelineNode }
 
@@ -236,6 +237,7 @@ export default function Board({
             <a className="hub-link" href="https://tensedbomsie.github.io/SatoruHUB/" title="กลับไป Satoru HUB">
               🏠
             </a>
+            <AppSwitcher current="Storyboard" />
             <button onClick={onBack}>← กระดานทั้งหมด</button>
             <button onClick={() => addNode('text')}>+ Text Node</button>
             <button onClick={() => addNode('image')}>+ Image Node</button>
