@@ -25,6 +25,7 @@ import { BoardActionsContext } from './BoardActionsContext'
 import { NodesContext } from './NodesContext'
 import { buildExportText, buildBackupText, parseBackupText } from './export'
 import AppSwitcher from './AppSwitcher'
+import ThemePicker from './ThemePicker'
 
 const nodeTypes = { text: TextNode, image: ImageNode, timeline: TimelineNode, shape: ShapeNode }
 
@@ -384,6 +385,7 @@ export default function Board({
               </span>
             )}
             <span className="spacer" />
+            <ThemePicker />
             <span className="user-email">{session.user.email}</span>
             <button onClick={() => supabase.auth.signOut()}>ออกจากระบบ</button>
           </div>
