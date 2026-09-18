@@ -4,7 +4,7 @@ import type { ShapeKind, StoryNode, StoryNodeData } from './types'
 export type Pt = { x: number; y: number }
 
 /** every tool the floating draw toolbar offers */
-export type Tool = 'select' | ShapeKind
+export type Tool = 'select' | 'eraser' | ShapeKind
 
 export const TOOLS: { id: Tool; icon: string; title: string }[] = [
   { id: 'select', icon: '↖', title: 'เลือก / ย้าย / ปรับขนาด (Esc)' },
@@ -14,7 +14,120 @@ export const TOOLS: { id: Tool; icon: string; title: string }[] = [
   { id: 'triangle', icon: '△', title: 'สามเหลี่ยม' },
   { id: 'arrow', icon: '↗', title: 'ลูกศร (ลากจากต้นทางไปปลายทาง)' },
   { id: 'star', icon: '★', title: 'ดาว' },
+  { id: 'eraser', icon: '🧽', title: 'ยางลบ — ลากทับรูปทรงเพื่อลบ (ไม่ลบการ์ดไอเดีย)' },
 ]
+
+/** the tool ids that actually draw something */
+export function drawKindOf(tool: Tool): ShapeKind | null {
+  return tool === 'select' || tool === 'eraser' ? null : tool
+}
+
+/**
+ * Half-width of the eraser tip, in *flow* units. The pointer erases any shape
+ * whose stroke falls inside this radius, so a fast drag still rubs things out.
+ */
+export const ERASER_RADIUS = 9
+
+const cross = (o: Pt, a: Pt, b: Pt) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x)
+
+/** do segments p1-p2 and p3-p4 properly cross each other? */
+function segmentsIntersect(p1: Pt, p2: Pt, p3: Pt, p4: Pt) {
+  const d1 = cross(p3, p4, p1)
+  const d2 = cross(p3, p4, p2)
+  const d3 = cross(p1, p2, p3)
+  const d4 = cross(p1, p2, p4)
+  return ((d1 > 0) !== (d2 > 0)) && ((d3 > 0) !== (d4 > 0))
+}
+
+/** squared distance from point p to the segment a-b */
+function distToSegmentSq(p: Pt, a: Pt, b: Pt) {
+  const dx = b.x - a.x
+  const dy = b.y - a.y
+  const lenSq = dx * dx + dy * dy
+  let t = lenSq === 0 ? 0 : ((p.x - a.x) * dx + (p.y - a.y) * dy) / lenSq
+  t = Math.max(0, Math.min(1, t))
+  const cx = a.x + t * dx - p.x
+  const cy = a.y + t * dy - p.y
+  return cx * cx + cy * cy
+}
+
+/**
+ * The outline of a shape as a list of segments, in flow coordinates.
+ * Used by the eraser so it rubs out what you visually touch (the stroke),
+ * not just anything whose bounding box happens to contain the pointer.
+ */
+function outlineSegments(node: StoryNode): [Pt, Pt][] {
+  const { x, y } = node.position
+  const w = node.width ?? MIN_SHAPE
+  const h = node.height ?? MIN_SHAPE
+  const at = (px: number, py: number) => ({ x: x + px, y: y + py })
+  const chain = (pts: Pt[], close: boolean): [Pt, Pt][] => {
+    const segs: [Pt, Pt][] = []
+    for (let i = 1; i < pts.length; i++) segs.push([pts[i - 1], pts[i]])
+    if (close && pts.length > 1) segs.push([pts[pts.length - 1], pts[0]])
+    return segs
+  }
+
+  switch (node.data.shape) {
+    case 'freehand':
+      return chain((node.data.points ?? []).map((p) => at(p.x * w, p.y * h)), false)
+    case 'arrow': {
+      const a = node.data.points?.[0] ?? { x: 0, y: 0 }
+      const b = node.data.points?.[1] ?? { x: 1, y: 1 }
+      return [[at(a.x * w, a.y * h), at(b.x * w, b.y * h)]]
+    }
+    case 'triangle':
+      return chain([at(w / 2, 0), at(0, h), at(w, h)], true)
+    case 'star':
+      return chain(
+        starPoints(w, h)
+          .split(' ')
+          .map((pair) => {
+            const [px, py] = pair.split(',').map(Number)
+            return at(px, py)
+          }),
+        true,
+      )
+    case 'ellipse': {
+      const pts: Pt[] = []
+      for (let i = 0; i < 24; i++) {
+        const angle = (Math.PI * 2 * i) / 24
+        pts.push(at(w / 2 + (w / 2) * Math.cos(angle), h / 2 + (h / 2) * Math.sin(angle)))
+      }
+      return chain(pts, true)
+    }
+    default: // rect
+      return chain([at(0, 0), at(w, 0), at(w, h), at(0, h)], true)
+  }
+}
+
+/** does the eraser tip, dragged from `from` to `to`, touch this shape's outline? */
+export function eraserTouchesShape(node: StoryNode, from: Pt, to: Pt) {
+  if (node.type !== 'shape') return false
+  const w = node.width ?? MIN_SHAPE
+  const h = node.height ?? MIN_SHAPE
+  // cheap reject: eraser path nowhere near the shape's box
+  const pad = ERASER_RADIUS
+  const minX = Math.min(from.x, to.x) - pad
+  const maxX = Math.max(from.x, to.x) + pad
+  const minY = Math.min(from.y, to.y) - pad
+  const maxY = Math.max(from.y, to.y) + pad
+  if (maxX < node.position.x || minX > node.position.x + w) return false
+  if (maxY < node.position.y || minY > node.position.y + h) return false
+
+  const rSq = ERASER_RADIUS * ERASER_RADIUS
+  for (const [a, b] of outlineSegments(node)) {
+    // the eraser's travel and the outline segment either cross outright, or
+    // their closest approach is at one of the four endpoints — so a fast drag
+    // across a thin line still registers instead of jumping over it
+    if (segmentsIntersect(from, to, a, b)) return true
+    if (distToSegmentSq(a, from, to) <= rSq) return true
+    if (distToSegmentSq(b, from, to) <= rSq) return true
+    if (distToSegmentSq(from, a, b) <= rSq) return true
+    if (distToSegmentSq(to, a, b) <= rSq) return true
+  }
+  return false
+}
 
 /** smallest width/height a shape node may have (also the resizer minimum) */
 export const MIN_SHAPE = 10

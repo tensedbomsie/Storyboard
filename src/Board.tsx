@@ -19,7 +19,7 @@ import ImageNode from './nodes/ImageNode'
 import TimelineNode from './nodes/TimelineNode'
 import ShapeNode from './nodes/ShapeNode'
 import { DrawCaptureLayer, DrawToolbar } from './DrawLayer'
-import { migrateLegacyDrawNodes, type Tool } from './shapes'
+import { eraserTouchesShape, migrateLegacyDrawNodes, type Pt, type Tool } from './shapes'
 import { SessionContext } from './SessionContext'
 import { BoardActionsContext } from './BoardActionsContext'
 import { NodesContext } from './NodesContext'
@@ -247,6 +247,19 @@ export default function Board({
     setNodes((nds) => nds.filter((n) => !(n.selected && n.type === 'shape')))
   }
 
+  const eraseAlong = useCallback(
+    (from: Pt, to: Pt) => {
+      setNodes((nds) => {
+        // only free-floating shapes get rubbed out — never a story card
+        const next = nds.filter((n) => !(n.type === 'shape' && eraserTouchesShape(n, from, to)))
+        // same array back when nothing was touched: no re-render, no undo step,
+        // no autosave churn while the eraser sweeps over empty canvas
+        return next.length === nds.length ? nds : next
+      })
+    },
+    [setNodes],
+  )
+
   const openExport = () => {
     setCopyStatus(null)
     setExportMode('ai')
@@ -376,7 +389,9 @@ export default function Board({
           </div>
           <div className="canvas">
             <ReactFlow
-              className={tool === 'select' ? undefined : 'drawing'}
+              className={
+                tool === 'select' ? undefined : tool === 'eraser' ? 'drawing erasing' : 'drawing'
+              }
               nodes={nodes}
               edges={edges}
               nodeTypes={nodeTypes}
@@ -400,7 +415,12 @@ export default function Board({
                 selectedShapeCount={selectedShapes.length}
                 onDeleteSelected={deleteSelectedShapes}
               />
-              <DrawCaptureLayer tool={tool} color={drawColor} onCreate={addShape} />
+              <DrawCaptureLayer
+                tool={tool}
+                color={drawColor}
+                onCreate={addShape}
+                onErase={eraseAlong}
+              />
             </ReactFlow>
           </div>
           {exportMode !== null && (

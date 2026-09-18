@@ -556,6 +556,16 @@ select option {
   cursor: crosshair;
 }
 
+.react-flow.erasing .react-flow__pane {
+  cursor: cell;
+}
+
+.eraser-tip {
+  fill: rgba(248, 113, 113, 0.18);
+  stroke: var(--danger);
+  stroke-width: 1.5;
+}
+
 .draw-tool-btn {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--glass-border);
