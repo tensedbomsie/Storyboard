@@ -9,57 +9,62 @@ export default function TextNode({ id, data, selected }: NodeProps<StoryNode>) {
   const text = useCursorPreserve<HTMLTextAreaElement>()
 
   return (
-    <div
-      className={`story-node${selected ? ' selected' : ''}${data.pinned ? ' pinned' : ''}`}
-      style={{ borderColor: data.color }}
-    >
+    // NodeResizer stays OUTSIDE .story-node on purpose: that card is a
+    // containing block (backdrop-filter) with overflow:hidden, which would clip
+    // the resize controls away — see the comment on .story-node in App.css.
+    <>
       <NodeResizer isVisible={selected} minWidth={200} minHeight={140} lineClassName="nodrag" handleClassName="nodrag" />
-      <Handle type="target" position={Position.Left} />
-      <div className="story-node-header" style={{ background: data.color }}>
-        <input
-          className="story-node-title"
-          value={data.label}
-          onChange={(e) => title.handleChange(e, (v) => update({ label: v }))}
-          placeholder="ชื่อ node"
+      <div
+        className={`story-node${selected ? ' selected' : ''}${data.pinned ? ' pinned' : ''}`}
+        style={{ borderColor: data.color }}
+      >
+        <Handle type="target" position={Position.Left} />
+        <div className="story-node-header" style={{ background: data.color }}>
+          <input
+            className="story-node-title"
+            value={data.label}
+            onChange={(e) => title.handleChange(e, (v) => update({ label: v }))}
+            placeholder="ชื่อ node"
+          />
+          <button
+            type="button"
+            className="story-node-pin nodrag"
+            title={data.pinned ? 'เลิกปักหมุด' : 'ปักหมุด'}
+            onClick={togglePin}
+          >
+            📌
+          </button>
+          <button
+            type="button"
+            className="story-node-send nodrag"
+            title="ส่งไปบอร์ดอื่น"
+            onClick={sendToAnotherBoard}
+          >
+            📤
+          </button>
+          <button
+            type="button"
+            className="story-node-duplicate nodrag"
+            title="ทำสำเนา node"
+            onClick={duplicate}
+          >
+            ⧉
+          </button>
+          <input
+            type="color"
+            className="story-node-color"
+            value={data.color}
+            onChange={(e) => update({ color: e.target.value })}
+          />
+        </div>
+        <textarea
+          className="story-node-text nodrag"
+          value={data.text ?? ''}
+          onChange={(e) => text.handleChange(e, (v) => update({ text: v }))}
+          placeholder="เขียนไอเดีย..."
         />
-        <button
-          type="button"
-          className="story-node-pin nodrag"
-          title={data.pinned ? 'เลิกปักหมุด' : 'ปักหมุด'}
-          onClick={togglePin}
-        >
-          📌
-        </button>
-        <button
-          type="button"
-          className="story-node-send nodrag"
-          title="ส่งไปบอร์ดอื่น"
-          onClick={sendToAnotherBoard}
-        >
-          📤
-        </button>
-        <button
-          type="button"
-          className="story-node-duplicate nodrag"
-          title="ทำสำเนา node"
-          onClick={duplicate}
-        >
-          ⧉
-        </button>
-        <input
-          type="color"
-          className="story-node-color"
-          value={data.color}
-          onChange={(e) => update({ color: e.target.value })}
-        />
+        <Handle type="source" position={Position.Right} />
       </div>
-      <textarea
-        className="story-node-text nodrag"
-        value={data.text ?? ''}
-        onChange={(e) => text.handleChange(e, (v) => update({ text: v }))}
-        placeholder="เขียนไอเดีย..."
-      />
-      <Handle type="source" position={Position.Right} />
-    </div>
+    </>
   )
 }

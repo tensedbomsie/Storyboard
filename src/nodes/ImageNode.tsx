@@ -27,64 +27,69 @@ export default function ImageNode({ id, data, selected }: NodeProps<StoryNode>) 
   }
 
   return (
-    <div
-      className={`story-node${selected ? ' selected' : ''}${data.pinned ? ' pinned' : ''}`}
-      style={{ borderColor: data.color }}
-    >
+    // NodeResizer stays OUTSIDE .story-node on purpose: that card is a
+    // containing block (backdrop-filter) with overflow:hidden, which would clip
+    // the resize controls away — see the comment on .story-node in App.css.
+    <>
       <NodeResizer isVisible={selected} minWidth={200} minHeight={180} lineClassName="nodrag" handleClassName="nodrag" />
-      <Handle type="target" position={Position.Left} />
-      <div className="story-node-header" style={{ background: data.color }}>
-        <input
-          className="story-node-title"
-          value={data.label}
-          onChange={(e) => title.handleChange(e, (v) => update({ label: v }))}
-          placeholder="ชื่อ node"
-        />
-        <button
-          type="button"
-          className="story-node-pin nodrag"
-          title={data.pinned ? 'เลิกปักหมุด' : 'ปักหมุด'}
-          onClick={togglePin}
-        >
-          📌
-        </button>
-        <button
-          type="button"
-          className="story-node-send nodrag"
-          title="ส่งไปบอร์ดอื่น"
-          onClick={sendToAnotherBoard}
-        >
-          📤
-        </button>
-        <button
-          type="button"
-          className="story-node-duplicate nodrag"
-          title="ทำสำเนา node"
-          onClick={duplicate}
-        >
-          ⧉
-        </button>
-        <input
-          type="color"
-          className="story-node-color"
-          value={data.color}
-          onChange={(e) => update({ color: e.target.value })}
-        />
+      <div
+        className={`story-node${selected ? ' selected' : ''}${data.pinned ? ' pinned' : ''}`}
+        style={{ borderColor: data.color }}
+      >
+        <Handle type="target" position={Position.Left} />
+        <div className="story-node-header" style={{ background: data.color }}>
+          <input
+            className="story-node-title"
+            value={data.label}
+            onChange={(e) => title.handleChange(e, (v) => update({ label: v }))}
+            placeholder="ชื่อ node"
+          />
+          <button
+            type="button"
+            className="story-node-pin nodrag"
+            title={data.pinned ? 'เลิกปักหมุด' : 'ปักหมุด'}
+            onClick={togglePin}
+          >
+            📌
+          </button>
+          <button
+            type="button"
+            className="story-node-send nodrag"
+            title="ส่งไปบอร์ดอื่น"
+            onClick={sendToAnotherBoard}
+          >
+            📤
+          </button>
+          <button
+            type="button"
+            className="story-node-duplicate nodrag"
+            title="ทำสำเนา node"
+            onClick={duplicate}
+          >
+            ⧉
+          </button>
+          <input
+            type="color"
+            className="story-node-color"
+            value={data.color}
+            onChange={(e) => update({ color: e.target.value })}
+          />
+        </div>
+        <div className="story-node-image nodrag">
+          {data.imageUrl ? (
+            <img src={data.imageUrl} alt={data.label} />
+          ) : (
+            <div className="story-node-image-placeholder">
+              {uploading ? 'กำลังอัปโหลด...' : 'ไม่มีรูป'}
+            </div>
+          )}
+          <label className="story-node-upload-btn">
+            อัปโหลดรูป
+            <input type="file" accept="image/*" onChange={handleFile} hidden />
+          </label>
+        </div>
+        <Handle type="source" position={Position.Right} />
       </div>
-      <div className="story-node-image nodrag">
-        {data.imageUrl ? (
-          <img src={data.imageUrl} alt={data.label} />
-        ) : (
-          <div className="story-node-image-placeholder">
-            {uploading ? 'กำลังอัปโหลด...' : 'ไม่มีรูป'}
-          </div>
-        )}
-        <label className="story-node-upload-btn">
-          อัปโหลดรูป
-          <input type="file" accept="image/*" onChange={handleFile} hidden />
-        </label>
-      </div>
-      <Handle type="source" position={Position.Right} />
-    </div>
+    </>
   )
 }
