@@ -17,13 +17,14 @@ import type { BoardMeta, StoryNode } from './types'
 import TextNode from './nodes/TextNode'
 import ImageNode from './nodes/ImageNode'
 import TimelineNode from './nodes/TimelineNode'
+import DrawNode from './nodes/DrawNode'
 import { SessionContext } from './SessionContext'
 import { BoardActionsContext } from './BoardActionsContext'
 import { NodesContext } from './NodesContext'
 import { buildExportText, buildBackupText, parseBackupText } from './export'
 import AppSwitcher from './AppSwitcher'
 
-const nodeTypes = { text: TextNode, image: ImageNode, timeline: TimelineNode }
+const nodeTypes = { text: TextNode, image: ImageNode, timeline: TimelineNode, draw: DrawNode }
 
 const randomColor = () =>
   ['#7c3aed', '#dc2626', '#059669', '#d97706', '#2563eb'][
@@ -188,10 +189,10 @@ export default function Board({
     [setEdges],
   )
 
-  const addNode = (type: 'text' | 'image' | 'timeline') => {
+  const addNode = (type: 'text' | 'image' | 'timeline' | 'draw') => {
     const id = crypto.randomUUID()
-    const labels = { text: 'ไอเดียใหม่', image: 'รูปใหม่', timeline: 'เหตุการณ์ใหม่' }
-    const sizes = { text: [220, 180], image: [220, 260], timeline: [240, 200] } as const
+    const labels = { text: 'ไอเดียใหม่', image: 'รูปใหม่', timeline: 'เหตุการณ์ใหม่', draw: 'ภาพวาดใหม่' }
+    const sizes = { text: [220, 180], image: [220, 260], timeline: [240, 200], draw: [340, 300] } as const
     const [width, height] = sizes[type]
     const newNode: StoryNode = {
       id,
@@ -205,6 +206,7 @@ export default function Board({
         text: '',
         imageUrl: '',
         date: '',
+        elements: [],
       },
     }
     setNodes((nds) => [...nds, newNode])
@@ -314,6 +316,7 @@ export default function Board({
             <button onClick={() => addNode('text')}>+ Text Node</button>
             <button onClick={() => addNode('image')}>+ Image Node</button>
             <button onClick={() => addNode('timeline')}>+ Timeline Node</button>
+            <button onClick={() => addNode('draw')}>+ Draw Node</button>
             <button onClick={undo} disabled={!canUndo} title="เลิกทำ (Ctrl+Z)">↶ Undo</button>
             <button onClick={redo} disabled={!canRedo} title="ทำซ้ำ (Ctrl+Y)">↷ Redo</button>
             <button onClick={openExport}>Export</button>
