@@ -1,18 +1,6 @@
 import type { Node } from '@xyflow/react'
 
-export type DrawElementType = 'freehand' | 'rect' | 'ellipse' | 'triangle' | 'arrow' | 'star'
-
-export type DrawElement = {
-  id: string
-  type: DrawElementType
-  color: string
-  x: number
-  y: number
-  width: number
-  height: number
-  /** normalized 0..1 within the element's own bounding box — only for freehand */
-  points?: { x: number; y: number }[]
-}
+export type ShapeKind = 'freehand' | 'rect' | 'ellipse' | 'triangle' | 'arrow' | 'star'
 
 export type StoryNodeData = {
   label: string
@@ -21,7 +9,13 @@ export type StoryNodeData = {
   imageUrl?: string
   date?: string
   pinned?: boolean
-  elements?: DrawElement[]
+  /** only on `type: 'shape'` nodes — which geometry to draw inside the node box */
+  shape?: ShapeKind
+  /**
+   * normalized 0..1 inside the shape node's own box.
+   * freehand: every sampled point. arrow: exactly [start, end].
+   */
+  points?: { x: number; y: number }[]
 }
 
 export type StoryNode = Node<StoryNodeData>

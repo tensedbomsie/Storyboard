@@ -11,7 +11,8 @@ export function buildExportText(boardName: string, nodes: StoryNode[], edges: Ed
   const lines: string[] = [`# Storyboard: ${boardName}`, '']
 
   lines.push('## Nodes')
-  for (const node of nodes) {
+  // free-floating drawings carry no story text — they'd only be noise for an AI
+  for (const node of nodes.filter((n) => n.type !== 'shape')) {
     const kind = typeLabel[node.type ?? ''] ?? node.type
     lines.push(`- [${kind}] "${node.data.label}"${node.data.date ? ` (${node.data.date})` : ''}`)
     if (node.data.text) lines.push(`  ${node.data.text.replace(/\n/g, '\n  ')}`)

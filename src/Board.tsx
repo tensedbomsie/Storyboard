@@ -17,14 +17,18 @@ import type { BoardMeta, StoryNode } from './types'
 import TextNode from './nodes/TextNode'
 import ImageNode from './nodes/ImageNode'
 import TimelineNode from './nodes/TimelineNode'
-import DrawNode from './nodes/DrawNode'
+import ShapeNode from './nodes/ShapeNode'
+import { DrawCaptureLayer, DrawToolbar } from './DrawLayer'
+import { migrateLegacyDrawNodes, type Tool } from './shapes'
 import { SessionContext } from './SessionContext'
 import { BoardActionsContext } from './BoardActionsContext'
 import { NodesContext } from './NodesContext'
 import { buildExportText, buildBackupText, parseBackupText } from './export'
 import AppSwitcher from './AppSwitcher'
 
-const nodeTypes = { text: TextNode, image: ImageNode, timeline: TimelineNode, draw: DrawNode }
+const nodeTypes = { text: TextNode, image: ImageNode, timeline: TimelineNode, shape: ShapeNode }
+
+const DELETE_KEYS = ['Delete', 'Backspace']
 
 const randomColor = () =>
   ['#7c3aed', '#dc2626', '#059669', '#d97706', '#2563eb'][
@@ -53,6 +57,8 @@ export default function Board({
   const [otherBoards, setOtherBoards] = useState<BoardMeta[]>([])
   const [sendStatus, setSendStatus] = useState<string | null>(null)
   const [conflict, setConflict] = useState(false)
+  const [tool, setTool] = useState<Tool>('select')
+  const [drawColor, setDrawColor] = useState('#38bdf8')
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastKnownUpdatedAt = useRef<string | null>(null)
   const historyRef = useRef<{ nodes: StoryNode[]; edges: Edge[] }[]>([])
@@ -68,8 +74,12 @@ export default function Board({
       .eq('id', boardId)
       .maybeSingle()
 
-    setNodes((data?.nodes as StoryNode[]) ?? [])
-    setEdges((data?.edges as Edge[]) ?? [])
+    const migrated = migrateLegacyDrawNodes(
+      (data?.nodes as StoryNode[]) ?? [],
+      (data?.edges as Edge[]) ?? [],
+    )
+    setNodes(migrated.nodes)
+    setEdges(migrated.edges)
     setBoardName(data?.name ?? '')
     lastKnownUpdatedAt.current = data?.updated_at ?? null
     setConflict(false)
@@ -142,6 +152,8 @@ export default function Board({
       } else if ((e.ctrlKey || e.metaKey) && (key === 'y' || (key === 'z' && e.shiftKey))) {
         e.preventDefault()
         redo()
+      } else if (e.key === 'Escape') {
+        setTool('select')
       }
     }
     window.addEventListener('keydown', handler)
@@ -189,10 +201,10 @@ export default function Board({
     [setEdges],
   )
 
-  const addNode = (type: 'text' | 'image' | 'timeline' | 'draw') => {
+  const addNode = (type: 'text' | 'image' | 'timeline') => {
     const id = crypto.randomUUID()
-    const labels = { text: 'ไอเดียใหม่', image: 'รูปใหม่', timeline: 'เหตุการณ์ใหม่', draw: 'ภาพวาดใหม่' }
-    const sizes = { text: [220, 180], image: [220, 260], timeline: [240, 200], draw: [340, 300] } as const
+    const labels = { text: 'ไอเดียใหม่', image: 'รูปใหม่', timeline: 'เหตุการณ์ใหม่' }
+    const sizes = { text: [220, 180], image: [220, 260], timeline: [240, 200] } as const
     const [width, height] = sizes[type]
     const newNode: StoryNode = {
       id,
@@ -206,16 +218,33 @@ export default function Board({
         text: '',
         imageUrl: '',
         date: '',
-        elements: [],
       },
     }
     setNodes((nds) => [...nds, newNode])
   }
 
   const selectedNodes = nodes.filter((n) => n.selected)
+  const selectedShapes = selectedNodes.filter((n) => n.type === 'shape')
 
   const applyColorToSelection = (color: string) => {
     setNodes((nds) => nds.map((n) => (n.selected ? { ...n, data: { ...n.data, color } } : n)))
+  }
+
+  const addShape = useCallback(
+    (node: StoryNode) => setNodes((nds) => [...nds, node]),
+    [setNodes],
+  )
+
+  const pickDrawColor = (color: string) => {
+    setDrawColor(color)
+    // FigJam-ish: the swatch also recolours whatever shapes are selected right now
+    setNodes((nds) =>
+      nds.map((n) => (n.selected && n.type === 'shape' ? { ...n, data: { ...n.data, color } } : n)),
+    )
+  }
+
+  const deleteSelectedShapes = () => {
+    setNodes((nds) => nds.filter((n) => !(n.selected && n.type === 'shape')))
   }
 
   const openExport = () => {
@@ -247,7 +276,11 @@ export default function Board({
 
   const runImport = () => {
     try {
-      const { nodes: importedNodes, edges: importedEdges } = parseBackupText(importText)
+      const parsed = parseBackupText(importText)
+      const { nodes: importedNodes, edges: importedEdges } = migrateLegacyDrawNodes(
+        parsed.nodes,
+        parsed.edges,
+      )
       const idMap = new Map<string, string>()
       const newNodes: StoryNode[] = importedNodes.map((n) => {
         const newId = crypto.randomUUID()
@@ -316,7 +349,6 @@ export default function Board({
             <button onClick={() => addNode('text')}>+ Text Node</button>
             <button onClick={() => addNode('image')}>+ Image Node</button>
             <button onClick={() => addNode('timeline')}>+ Timeline Node</button>
-            <button onClick={() => addNode('draw')}>+ Draw Node</button>
             <button onClick={undo} disabled={!canUndo} title="เลิกทำ (Ctrl+Z)">↶ Undo</button>
             <button onClick={redo} disabled={!canRedo} title="ทำซ้ำ (Ctrl+Y)">↷ Redo</button>
             <button onClick={openExport}>Export</button>
@@ -344,6 +376,7 @@ export default function Board({
           </div>
           <div className="canvas">
             <ReactFlow
+              className={tool === 'select' ? undefined : 'drawing'}
               nodes={nodes}
               edges={edges}
               nodeTypes={nodeTypes}
@@ -351,11 +384,23 @@ export default function Board({
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
               onEdgeDoubleClick={onEdgeDoubleClick}
+              panOnDrag={tool === 'select'}
+              nodesDraggable={tool === 'select'}
+              deleteKeyCode={DELETE_KEYS}
               fitView
             >
               <Background />
               <Controls />
               <MiniMap />
+              <DrawToolbar
+                tool={tool}
+                setTool={setTool}
+                color={drawColor}
+                setColor={pickDrawColor}
+                selectedShapeCount={selectedShapes.length}
+                onDeleteSelected={deleteSelectedShapes}
+              />
+              <DrawCaptureLayer tool={tool} color={drawColor} onCreate={addShape} />
             </ReactFlow>
           </div>
           {exportMode !== null && (
