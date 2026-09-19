@@ -411,9 +411,10 @@ select option {
   background: rgba(20, 21, 28, 0.9);
   /* NOTE: backdrop-filter makes this element a containing block for absolutely
      positioned descendants, so the overflow:hidden below really does clip them.
-     That is why <NodeResizer> is rendered OUTSIDE .story-node in the node
-     components — inside, its controls (which straddle the node's edge) were
-     clipped down to a 0.5px sliver and resizing was effectively impossible. */
+     That is why <NodeResizer> AND the connection <Handle>s are rendered
+     OUTSIDE .story-node in the node components — inside, controls that
+     straddle the node's edge were clipped down to a sliver and effectively
+     unusable. */
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   overflow: hidden;
@@ -424,6 +425,12 @@ select option {
    sibling it would paint over the resize controls and swallow the top/left
    edge grips. Lift the controls above the card they belong to. */
 .react-flow__resize-control {
+  z-index: 1;
+}
+
+/* same story as the resize controls above: the connection dots straddle
+   .story-node's edge too, so they need to sit outside it AND above it. */
+.react-flow__handle {
   z-index: 1;
 }
 

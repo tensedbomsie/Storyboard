@@ -10,16 +10,18 @@ export default function TimelineNode({ id, data, selected }: NodeProps<StoryNode
   const text = useCursorPreserve<HTMLTextAreaElement>()
 
   return (
-    // NodeResizer stays OUTSIDE .story-node on purpose: that card is a
-    // containing block (backdrop-filter) with overflow:hidden, which would clip
-    // the resize controls away — see the comment on .story-node in App.css.
+    // NodeResizer and the connection Handles all stay OUTSIDE .story-node on
+    // purpose: that card is a containing block (backdrop-filter) with
+    // overflow:hidden, which would clip them away — see the comment on
+    // .story-node in App.css.
     <>
       <NodeResizer isVisible={selected} minWidth={200} minHeight={160} lineClassName="nodrag" handleClassName="nodrag" />
+      <Handle type="target" position={Position.Left} />
+      <Handle type="source" position={Position.Right} />
       <div
         className={`story-node${selected ? ' selected' : ''}${data.pinned ? ' pinned' : ''}`}
         style={{ borderColor: data.color }}
       >
-        <Handle type="target" position={Position.Left} />
         <div className="story-node-header" style={{ background: data.color }}>
           <input
             className="story-node-title"
@@ -73,7 +75,6 @@ export default function TimelineNode({ id, data, selected }: NodeProps<StoryNode
             placeholder="รายละเอียดเหตุการณ์..."
           />
         </div>
-        <Handle type="source" position={Position.Right} />
       </div>
     </>
   )
